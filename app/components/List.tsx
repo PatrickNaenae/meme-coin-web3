@@ -1,17 +1,14 @@
-import { ethers, BrowserProvider } from "ethers";
-import type { Factory } from "../../typechain-types";
+import { ethers } from "ethers";
+import { useBlockchain } from "../../context/BlockchainProvider";
 
-function List({
-  toggleCreate,
-  fee,
-  provider,
-  factory,
-}: {
-  toggleCreate: () => void;
-  fee: bigint;
-  provider: BrowserProvider;
-  factory: Factory;
-}) {
+function List({ toggleCreate }: { toggleCreate: () => void }) {
+  const contextValue = useBlockchain();
+  if (!contextValue) {
+    console.log("Context not found");
+    return null;
+  }
+
+  const { provider, factory, fee } = contextValue;
   async function listHandler(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -21,12 +18,12 @@ function List({
     const name = formData.get("name") as string;
     const ticker = formData.get("ticker") as string;
 
-    const signer = await provider.getSigner();
+    const signer = await provider?.getSigner();
 
     const transaction = await factory
-      .connect(signer)
+      ?.connect(signer)
       .create(name, ticker, { value: fee });
-    await transaction.wait();
+    await transaction?.wait();
 
     toggleCreate();
   }

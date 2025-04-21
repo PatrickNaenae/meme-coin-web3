@@ -78,21 +78,11 @@ export default function Home() {
         </div>
 
         {showCreate && provider && factory && (
-          <List
-            toggleCreate={toggleCreate}
-            fee={fee}
-            provider={provider}
-            factory={factory}
-          />
+          <List toggleCreate={toggleCreate} />
         )}
 
         {showTrade && token && provider && factory && (
-          <Trade
-            toggleTrade={() => toggleTrade(token)}
-            token={token}
-            provider={provider}
-            factory={factory}
-          />
+          <Trade toggleTrade={() => toggleTrade(token)} token={token} />
         )}
       </main>
     </div>

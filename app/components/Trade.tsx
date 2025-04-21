@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { ethers, BrowserProvider } from "ethers";
-import type { Factory } from "../../typechain-types";
+import { ethers } from "ethers";
+import { useBlockchain } from "../../context/BlockchainProvider";
 
 interface TradeProps {
   toggleTrade: () => void;
@@ -13,14 +13,20 @@ interface TradeProps {
     isOpen: boolean;
     image: string;
   };
-  provider: BrowserProvider;
-  factory: Factory;
 }
 
-function Trade({ toggleTrade, token, provider, factory }: TradeProps) {
+function Trade({ toggleTrade, token }: TradeProps) {
   const [target, setTarget] = useState<bigint>(0n);
   const [limit, setLimit] = useState<bigint>(0n);
   const [cost, setCost] = useState<bigint>(0n);
+
+  const contextValue = useBlockchain();
+  if (!contextValue) {
+    console.log("Context not found");
+    return null;
+  }
+
+  const { provider, factory } = contextValue;
 
   async function buyHandler(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,33 +36,32 @@ function Trade({ toggleTrade, token, provider, factory }: TradeProps) {
     const amount = formData.get("amount") as string;
 
     try {
-      const cost = await factory.getCost(token.sold);
-      const totalCost = cost * BigInt(amount);
+      const cost = await factory?.getCost(token.sold);
+      const totalCost = cost && cost * BigInt(amount);
 
-      const signer = await provider.getSigner();
+      const signer = await provider?.getSigner();
 
       const transaction = await factory
-        .connect(signer)
+        ?.connect(signer)
         .buy(token.token, ethers.parseUnits(amount, 18), { value: totalCost });
-      await transaction.wait();
+      await transaction?.wait();
 
       toggleTrade();
     } catch (error) {
       console.error("Transaction failed:", error);
-      // You might want to add error state handling here
     }
   }
 
   async function getSaleDetails() {
     try {
-      const target = await factory.TARGET();
-      setTarget(target);
+      const target = await factory?.TARGET();
+      setTarget(target || 0n);
 
-      const limit = await factory.TOKEN_LIMIT();
-      setLimit(limit);
+      const limit = await factory?.TOKEN_LIMIT();
+      setLimit(limit || 0n);
 
-      const cost = await factory.getCost(token.sold);
-      setCost(cost);
+      const cost = await factory?.getCost(token.sold);
+      setCost(cost || 0n);
     } catch (error) {
       console.error("Failed to fetch sale details:", error);
     }
